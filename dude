@@ -1,0 +1,77 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+
+$SIG{"INT"} = sub { exit(0); };
+
+my $cachedir = "$ENV{HOME}/Library/Caches/DudeWheresMyDiskSpace";
+
+sub prepare_cache_directory () {
+    mkdir $cachedir || die "Unable to mkdir $cachedir: $!" unless -d $cachedir;
+}
+
+my $tmutil_machinedir = &tmutil_machinedir;
+sub tmutil_machinedir () {
+    my $dir = `tmutil machinedirectory`;
+    chomp $dir;
+    $dir;
+}
+
+sub tmutil_listbackups () {
+    my @backups = `tmutil listbackups`;
+    chomp @backups;
+    @backups;
+}
+
+sub tmutil_compare ($$$) {
+    my ($left, $right, $output_filename) = @_;
+    my $command = qq(tmutil compare -Xs "$left" "$right" | gzip >"$output_filename");
+    print "command [$command]\n";
+    system($command);
+}
+
+sub timestamp_from_backup_name ($) {
+    my ($left) = @_;
+    if ($_[0] =~ m!^$tmutil_machinedir/(.*)!) {
+        $1;
+    }
+    else {
+        die "no match $_";
+    }
+}
+
+sub cache_filename_from_pair ($) {
+    my ($left, $right) = @{$_[0]};
+    my $ts1 = timestamp_from_backup_name $left;
+    my $ts2 = timestamp_from_backup_name $right;
+    "$cachedir/${ts1}___$ts2.xml.gz";
+}
+
+sub create_tmdiff ($) {
+    my ($pair) = @_;
+    my ($left, $right) = @{$pair};
+    my $cache_filename = cache_filename_from_pair $pair;
+    if (! -e $cache_filename) {
+        tmutil_compare $left, $right, $cache_filename;
+    }
+}
+
+sub pairs ($) {
+    my ($list) = @_;
+    my @remaining = @$list;
+    my @pairs;
+    while (scalar(@remaining) > 1) {
+        my $left = shift @remaining;
+        my $right = $remaining[0];
+        push @pairs, [$left, $right];
+    }
+    @pairs;
+}
+
+&prepare_cache_directory;
+
+my @backups = &tmutil_listbackups;
+my @pairs = pairs \@backups;
+foreach (@pairs) {
+    create_tmdiff $_;
+}
