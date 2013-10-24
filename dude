@@ -4,7 +4,7 @@ use warnings;
 
 $SIG{"INT"} = sub { exit(0); };
 
-my $cachedir = "$ENV{HOME}/Library/Caches/DudeWheresMyDiskSpace";
+my $cachedir = "$ENV{HOME}/Library/Application Support/com.golmac.DudeWheresMyDiskSpace";
 
 sub prepare_cache_directory () {
     mkdir $cachedir || die "Unable to mkdir $cachedir: $!" unless -d $cachedir;
@@ -51,7 +51,7 @@ sub create_tmdiff ($) {
     my ($pair) = @_;
     my ($left, $right) = @{$pair};
     my $cache_filename = cache_filename_from_pair $pair;
-    if (! -e $cache_filename) {
+    if (! -e "$cache_filename") {
         tmutil_compare $left, $right, $cache_filename;
     }
 }
