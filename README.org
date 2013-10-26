@@ -1,0 +1,36 @@
+* Dude, Where's My Disk Space?
+
+*dude*: Disk Usage Difference Enumerator
+
+* What?
+
+How does your disk usage change?
+
+A set of TimeMachine incremental backups has historical information
+such as what files were created, deleted, and changed between backups,
+and how much disk space was consumed between backups.
+
+*dude* interrogates TimeMachine (with =tmutil=) like this:
+
+  1. Get a list of all backups
+  2. Taking them in pairs (chronologically adjacent), build a report
+     of the differences between them
+  3. If a report already exists for a pair, it is not rebuilt
+
+Thankfully =tmutil= can produce this data in machine readable XML, so
+a future project can answer the question: Where's My Disk Space?
+
+* Running
+
+#+BEGIN_SRC sh
+% dude
+#+END_SRC
+
+Difference reports will be stored in =~/Library/Application
+Support/com.golmac.DudeWheresMyDiskSpace=.
+
+For me, with a TimeCapsule on 802.11n, it takes a while to run...
+
+Also, over time as TimeMachine coalesces backups, courser reports will
+be built. *dude* does nothing special here; the earlier, fine-grained
+reports still exist.
